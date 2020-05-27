@@ -21,7 +21,7 @@ nEmbryos=numel(data) #data needs to be replaced with the inputData
 
 # xy_alignment_script.m:10
 
-assert_(nEmbryos >= nEmbryosUsed)
+assert_(nEmbryos >= nEmbryosUsed) #nEmbryos only =1 since the inputData isn't read properly
 
     # Authors' description of the data: "Each profile vector is of length 1000
 # pixels, where 0 corresponds to the anterior (A) and 1000 to the posterior
@@ -29,7 +29,7 @@ assert_(nEmbryos >= nEmbryosUsed)
 # To mitigate 'edge effects,' we extract only the middle 80# of the data to 
 # use throughout the analysis.
     
-nSamplePts=numel(data(1).Hb)
+nSamplePts=numel(data(1).Hb) #data needs to be replaced like line 19
 # xy_alignment_script.m:19
 
 x=(arange(1 / nSamplePts,1,1 / nSamplePts))
