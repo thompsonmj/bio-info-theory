@@ -12,13 +12,11 @@ nEmbryosUsed=102
 inputData='gap_data_raw_dorsal_wt'
 # xy_alignment_script.m:5
 
-inputFile=concat([inputData,'.mat'])
+inputFile=concat([inputData,'.mat']) #First error is that the file isn't being read in properly
 
 # xy_alignment_script.m:6
 
-#load(inputFile)
-
-nEmbryos=numel(data) 
+nEmbryos=numel(data) #data needs to be replaced with the inputData
 
 
 # xy_alignment_script.m:10
@@ -93,7 +91,7 @@ for iG in arange(1,nGenes).reshape(-1):
 # xy_alignment_script.m:50
         
         
-       # Y_yAlign1(arange(),arange(),iG),__ = aligny(y,nargout=2)
+       # Y_yAlign1(arange(),arange(),iG),__ = aligny(y,nargout=2) throws a syntax error
        
         
 # xy_alignment_script.m:51
@@ -133,7 +131,7 @@ for iG in arange(1,nGenes).reshape(-1):
 # xy_alignment_script.m:77
         
         
-       # Y_align(arange(),arange(),iG),__=aligny(y,nargout=2)
+       # Y_align(arange(),arange(),iG),__=aligny(y,nargout=2) throws a syntax error
         
         
 # xy_alignment_script.m:78
