@@ -36,7 +36,7 @@ for iG = 1:nGenes
 end
 Y_raw = Y_raw(idx_low:idx_high,idcs,:);
 [nPts,~,~] = size(Y_raw);
-padSize = round(nSamplePts*0.05);
+padSize = round(nSamplePts*0.1);
 Y_raw = padarray(Y_raw,padSize,NaN,'both');
 
 %% Comments
