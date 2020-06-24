@@ -36,7 +36,7 @@ for iG = 1:nGenes
 end
 Y_raw = Y_raw(idx_low:idx_high,idcs,:);
 [nPts,~,~] = size(Y_raw);
-padSize = round(nSamplePts*0.1);
+padSize = round(nSamplePts*0.05);
 Y_raw = padarray(Y_raw,padSize,NaN,'both');
 
 %% Comments
@@ -59,7 +59,7 @@ if UseParallel_TF
         parpool(pool.NumWorkers)
     end
 end
-[Y_xyAlign,alpha,beta,gamma] = alignxy(Y_yAlign1,UseParallel_TF);
+[Y_xAlign,alpha,beta,gamma] = alignxy(Y_yAlign1,UseParallel_TF);
 % Should explore a 'better' solution than genetic optimization. This was
 % chosen because I shift profiles in x using their integer indices, and
 % MATLAB's genetic optimizer allowed for easily implemented integer
@@ -71,11 +71,16 @@ end
 % too large). Additionally, y-alignment is poor when done jointly using
 % this method, so an additional chi^2 minimization must be run afterward.
 
+%% Trim away NaNs used for padding and x alignment.
+[nX,~,~] = size(Y_xAlign);
+Y_xAlign = Y_xAlign(padSize:nX-padSize+1,:,:);
+
 %% 3 Align Y alone once more for closed-form Y alignment.
-Y_align = zeros(size(Y_yAlign1));
+Y_align = zeros(size(Y_xAlign));
 for iG = 1:nGenes
-    y = squeeze(Y_xyAlign(:,:,iG));
+    y = squeeze(Y_xAlign(:,:,iG));
     [Y_align(:,:,iG),~] = aligny(y);
 end
 
+%% Save final result
 save([inputData,'_XY-Aligned.mat'])
