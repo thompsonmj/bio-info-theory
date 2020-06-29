@@ -14,20 +14,7 @@ function MI_est = ...
 %   > MI_est: nTrials x nBinSizes x nSubsamplesets x nBoots array of naive
 %   estimates. To be extrapolated to infinitte data and 0 bin size.
 %
-%%% Working on implementation for >1 gene 
 
-geneNo = [1 2 3 4];
-
-
-useHistcountsn = true;
- 
-[nX,nE,nG] = size(yData);
-
-%% Trim away NaNs used for padding and x alignment if present
-padSize = unique(sum(isnan(yData(:,:,1))))/2;
-assert(numel(padSize) == 1);
-
-yData = yData(padSize:nX-padSize+1,:,1);
 [nX,nE,nG] = size(yData);
 x = 1/nX:1/nX:1;
 
@@ -66,10 +53,9 @@ for iTrial = 1:nTrials
             disp(['Beginning bin ',num2str(iBinSize),'/',num2str(nBinSizes)])
             tic
         end
-        nBinsY = binCounts(iBinSize);
+        nBinsG = binCounts(iBinSize);
         
-%         nX = nBinsY;
-        nBinsX = nBinsY;
+        nBinsX = nBinsG;
         pxBin = 1/nBinsX; % Assume uniform distribution
         px = repmat(pxBin,nBinsX,1); % independent variable distribution
 
@@ -77,8 +63,8 @@ for iTrial = 1:nTrials
         for iSubsampleIdx = 1:nSubsamplesets
             % Initialize distributions for subsample size.
             mSubsamps = m(iSubsampleIdx);
-            py = zeros(1,nBinsY); % signal distribution         
-            pyxJ = zeros(nBinsX, nBinsY); % joint distribution
+            pg = zeros(1,nBinsG); % signal distribution         
+            pgxJ = zeros(nBinsX, nBinsG); % joint distribution
             MI_estTemp = zeros(nBoots,1);
             for iBoot = 1:nBoots
                 k = m(iSubsampleIdx);
@@ -90,18 +76,57 @@ for iTrial = 1:nTrials
                 xMat = repmat(x',1,mSubsamps);
                 xColumn = reshape(xMat,numel(xMat),1);
                 
-                py = histcounts(sub, ... 
-                    nBinsY, ...
-                    'Normalization', 'probability');
+                %% Joint distribution of signal(s) and position.
+                pgxJ = histcountsn([xColumn, sub],[nBinsX,nBinsG], ...
+                    'Normalization','probability');
+                pgxJ = pgxJ + eps;  
                 
-                %% 1 
-                if useHistcountsn
-                    pyxJ = histcountsn([xColumn, sub],[nBinsX,nBinsY]);
-                else
-                    pyxJ = histcounts2(xColumn,sub,[nBinsX,nBinsY],'Normalization','probability');
-                end 
+                pg = squeeze(sum(pgxJ,1));
+                
+                %% Mutual information calculation using Eq.7 from Tkacik et al 2015
+                %%% SATYA
+                pgxJ_satya = histcountsn([xColumn, sub],[nBinsX, nBinsG], ...
+                    'Normalization','probability'); % P(x, g1, g2): The joint PDF for (x, g1, g2)
+                pgxJ_satya= pgxJ_satya+eps; % Add eps so that 0*log2(0) is replaced by eps*log2(eps). Also, matlab has its own eps.
 
-                MI_estTemp(iBoot) = sum(nansum( pyxJ.*log2(pyxJ./(px.*py)) ));
+                % P(x) = PDF of x
+                px_satya= squeeze(sum(pgxJ_satya, [2 3]));
+                % P(g1, g2) = (joint) PDF of {g1,g2}
+                pg_satya= squeeze(sum(pgxJ_satya, 1)); 
+                % P(g1,g2 | x)= Joint PDF estimate of {g1,g2} conditional on x 
+                pg_given_x_satya= nan(size(pgxJ_satya)); 
+                
+                MIest_satya = 0; 
+                for iX = 1:nBinsX
+                    
+                    % P(g1,g2 | x) for x= xData(xVar)
+                    temp_conditional_pdf = ...
+                        squeeze(pgxJ_satya(iX, :, :)) / px_satya(iX); 
+                    
+                    pg_given_x_satya(iX, :, :) = temp_conditional_pdf;
+
+                    temp_logValue = ...
+                        temp_conditional_pdf .* log2( temp_conditional_pdf ./ pg_satya); % The inner summation/intergraion term in Eq. 7 
+                    MIest_satya = ...
+                        MIest_satya + px_satya(iX) * sum(temp_logValue(:));
+                end %%% WORKING
+                
+                %%% MINE
+                px = squeeze(sum(pgxJ, [2 3]));
+                assert(sum(px - px_satya) == 0);
+                
+                pg_given_x = pgxJ ./ px;
+                assert(sum(pg_given_x - pg_given_x_satya,'all') == 0);
+                assert(sum(pg - pg_satya) == 0);
+                
+                logValue = pg_given_x .* log2(pg_given_x ./ pg);
+                assert(sum(logValue(end,:) - temp_logValue) < 1e-10);
+                
+                MIest = sum(px .* logValue,'all');
+                assert(sum(MIest_satya - MIest) < 1e-10)
+                
+                %%% NOT WORKING
+%                 MI_estTemp(iBoot) = sum(nansum( pgxJ.*log2(pgxJ./(px.*pg)) ));
                                   
             end
             
