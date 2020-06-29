@@ -125,8 +125,12 @@ for iTrial = 1:nTrials
                 MIest = sum(px .* logValue,'all');
                 assert(sum(MIest_satya - MIest) < 1e-10)
                 
-                %%% NOT WORKING
-%                 MI_estTemp(iBoot) = sum(nansum( pgxJ.*log2(pgxJ./(px.*pg)) ));
+                %% Mutual information calculation using Eq.24 from Tkacik et al 2015
+
+                MI_estTemp(iBoot) = ...
+                    nansum( pgxJ.*log2(pgxJ./(px.*pg)), 'all');
+                
+                assert(sum(MI_estTemp(iBoot) - MIest) < 1e-10)
                                   
             end
             
@@ -149,4 +153,4 @@ for iTrial = 1:nTrials
     end
 end
 
-save(['direct-mi-estimate'],'MI_est','nBoots','binCounts','subSamps','m','nY')
+save(['direct-mi-estimate'],'MI_est','nBoots','binCounts','subSamps','m','nG')
