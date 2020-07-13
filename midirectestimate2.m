@@ -13,38 +13,25 @@ function MI_est = ...
 % Outputs
 %   > MI_est: nTrials x nBinSizes x nSubsamplesets x nBoots array of naive
 %   estimates. To be extrapolated to infinitte data and 0 bin size.
-%
-%%% Working on implementation for >1 gene 
  
-[nX,nY,nG] = size(yData);
+[nBinsX,nE,nG] = size(yData);
+x = 1/nBinsX:1/nBinsX:1;
 
-%% Trim away NaNs used for padding and x alignment if present
-padSize = unique(sum(isnan(yData(:,:,1))))/2;
-assert(numel(padSize) == 1);
-
-yData = yData(padSize:nX-padSize+1,:,[1,4]);
-[nX,nY,nG] = size(yData);
-x = 1/nX:1/nX:1;
-
-assert(nX == numel(x));
+assert(nBinsX == numel(x));
 
 % nX = 100; % For pSmad data with such small sample size.
 
-m = round(subSamps*nY);
+m = round(subSamps*nE);
 nSubsamplesets = numel(m);
 
 replacement = false;
 
-yIdx = [1:1:nY];
+embryoIdcs = [1:1:nE];
 
 nBinSizes = numel(binCounts);
 
-pxBin = 1/nX; % Assume uniform distribution
-% px = repmat(pxBin,nX,1); % independent variable distribution
-
-
 for iTrial = 1:nTrials
-    % Initialize for trial.
+    % Initialize this trial.
     MI_est(iTrial).binSizes = binCounts;
     MI_est(iTrial).subSamps = subSamps;
     MI_est(iTrial).nBoots = nBoots;
@@ -61,24 +48,21 @@ for iTrial = 1:nTrials
             disp(['Beginning bin ',num2str(iBinSize),'/',num2str(nBinSizes)])
             tic
         end
-        nBinsY = binCounts(iBinSize);
+        nBinsG = binCounts(iBinSize);
         
-        nX = nBinsY;
-        
-%         nBinsY = round(sqrt(nX));
-        pxBin = 1/nX; % Assume uniform distribution
-        px = repmat(pxBin,nX,1); % independent variable distribution
+        nBinsX = nBinsG;
+        pxBin = 1/nBinsX; % Assume uniform distribution
         
         iBinSizeIdx = iBinSizeIdx + 1;
         for iSubsampleIdx = 1:nSubsamplesets
             % Initialize distributions for subsample size.
             mSubsamps = m(iSubsampleIdx);
-            py = zeros(nBinsY,nBinsY); % signal distribution         
-            pyxJ = zeros(nX, nBinsY,nBinsY); % joint distribution
-            MI_estTemp = zeros(nBoots,1);
+            pg = zeros(nBinsG,nBinsG); % signal distribution         
+            pgxJ = zeros(nBinsX, nBinsG,nBinsG); % joint distribution
+            MIEq24 = zeros(nBoots,1);
             for iBoot = 1:nBoots
                 k = m(iSubsampleIdx);
-                subIdx = randsample(yIdx,k,replacement);
+                subIdx = randsample(embryoIdcs,k,replacement);
                 sub1 = yData(:,subIdx,1);
                 sub2 = yData(:,subIdx,2);
 
@@ -88,28 +72,48 @@ for iTrial = 1:nTrials
                 xMat = repmat(x',1,mSubsamps);
                 xColumn = reshape(xMat,numel(xMat),1);
                 
-                %% 1
-                py = histcountsn([sub1,sub2], ... 
-                    [nBinsY,nBinsY]);
-                
-%                 py = histcounts2(
-                
-%                 pyxJ1 = histcounts2(xColumn,sub,[nX,nBinsY],'Normalization','probability');
-                
-                %% 2
-                pyxJ2 = histcountsn([xColumn,sub1,sub2],[nX,nBinsY,nBinsY]);
+                %% Distributions
+                pgxJ = histcountsn([xColumn,sub1,sub2],[nBinsX,nBinsG,nBinsG], ...
+                    'Normalization', 'probability');
+                pgxJ = pgxJ + eps;
+                pgxJ_perm = permute(pgxJ,[2,3,1]);
 
-                pyxJ = pyxJ2;
-                px = repmat(pxBin,nX,nBinsY); % independent variable distribution
+                % P(g1,g2): Joint PDF of {g1,g2}
+                pg = squeeze(sum(pgxJ,1));
 
-                MI_estTemp(iBoot) = sum(sum(nansum( pyxJ.*log2(pyxJ./(px*py)) )));
-                                  
+                % P(x): PDF of x (uniform)
+                px = repmat(pxBin,nBinsX,1);                                  
+                
+                % P({g1,g2} | x): Joint PDF estimate of {g1,g2} conditional on x 
+                pg_given_x = pgxJ ./ px;
+                pg_given_x_perm = permute(pg_given_x,[2,3,1]);
+                
+                %% Eq. 7
+                % Inner summation/intergraion term
+                logValue = pg_given_x_perm .* log2(pg_given_x_perm ./ pg);
+                
+                MIEq7_temp = sum(px .* sum(logValue,3),'all');
+                
+                MIEq7(iBoot) = MIEq7_temp;
+                 
+                %% Eq.24
+                MIEq24_temp = ...
+                    sum( pgxJ_perm .* log2(pgxJ_perm ./ (px .* pg)), 'all' );  
+                
+                MIEq24(iBoot) = MIEq24_temp;
+                
+                %% Validation
+                assert(abs(MIEq7_temp - MIEq24_temp) < 1e-10)
+                             
             end
             
+%             disp(['Eq. 7:  ',num2str(mean(MIEq7))])
+%             disp(['Eq. 24: ',num2str(mean(MIEq24))])
+            
             MI_est(iTrial).naiveEst_means(iBinSize,iSubsampleIdx) = ...
-                mean(MI_estTemp);
+                mean(MIEq24);
             MI_est(iTrial).naiveEst_stds(iBinSize,iSubsampleIdx) = ...
-                std(MI_estTemp,0);
+                std(MIEq24,0);
             
         end
         
@@ -125,4 +129,4 @@ for iTrial = 1:nTrials
     end
 end
 
-save(['direct-mi-estimate'],'MI_est','nBoots','binCounts','subSamps','m','nY')
+save(['direct-mi-estimate'],'MI_est','nBoots','binCounts','subSamps','m','nE')
