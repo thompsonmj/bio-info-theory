@@ -43,7 +43,7 @@ extrapolatepi
 %Kr+Kni: 2.8909, 2.8929
 %Gt+Kni: 3.2207
 
-%% Plot comparison
+%% Plot comparisons (1D)
 % Fig. 8 | Table 1 | my calc.
 kni = [2.183, 1.83, 1.66]; 
 kr = [2.256, 1.96, 1.74]; 
@@ -57,3 +57,21 @@ title('MI Using XY Alignment')
 ylabel('MI (bits)')
 legend('Fig. 8', 'Table 1', 'my calc.')
 grid on
+
+%% Plot comparisons (2D)
+% Fig. 12 | my calc.
+kni_kr = [3.26, 2.89];
+kni_gt = [3.19, 3.22];
+kni_hb = [3.15, 3.13];
+kr_gt = [3.17, 3.10];
+kr_hb = [3.45, 3.41];
+gt_hb = [3.34, 3.40];
+
+y = [kni_kr; kni_gt; kni_hb; kr_gt; kr_hb; gt_hb];
+x = categorical({'kni/kr', 'kni/gt', 'kni/hb', 'kr/gt', 'kr/hb', 'gt/hb'});
+bar(x,y)
+title('MI Pairs Using XY Alignment')
+ylabel('MI (bits')
+legend('Fig. 12', 'my calc.')
+grid on
+
