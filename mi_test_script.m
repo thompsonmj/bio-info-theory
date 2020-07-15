@@ -1,15 +1,14 @@
 %% Setup
 
-clear
 
-load('gap_data_raw_dorsal_wt_XY-Aligned.mat')
 
+% load('gap_data_raw_dorsal_wt_XY-Aligned.mat')
+
+% load('psmad_sox2_2020-07-14_13-53.mat')
 gene1 = Y_align(:,:,1);
 [nX,nEmbryos] = size(gene1);
 
 x = 1/nX:1/nX:1;
-
-clear d
 
 nTrials = 1;
 nBoots = 1e2;
@@ -18,10 +17,11 @@ subSamps = [0.50, 0.75, 0.80, 0.85, 0.90, 0.95];
 % subSamps = 0.95
 % binCounts = 50
 
-genes = {'Hb','Kr','Gt','Kni'};
+% genes = {'Hb','Kr','Gt','Kni'};
+genes = {'Sox2','P-Smad'};
 
 [MI_est] = ...
-    midirectestimate2(Y_align(:,:,[2,4]), nTrials, nBoots, binCounts, subSamps);
+    midirectestimate2(Y_align(:,:,[1,2]), nTrials, nBoots, binCounts, subSamps);
 
 extrapolatepi
 

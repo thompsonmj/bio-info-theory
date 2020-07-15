@@ -44,8 +44,8 @@ ub_alpha = ones(nAlpha,1);
 lb_beta = zeros(nBeta,1);
 ub_beta = 2*ones(nBeta,1);
 
-lb_gamma = repmat(-padSize,nE,1);
-ub_gamma = repmat(padSize,nE,1);
+lb_gamma = repmat(-padSize/2,nE,1);
+ub_gamma = repmat(padSize/2,nE,1);
 
 lb = [lb_alpha; lb_beta; lb_gamma];
 ub = [ub_alpha; ub_beta; ub_gamma];

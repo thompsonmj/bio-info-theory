@@ -1,5 +1,3 @@
-% function output = extrapolatepi(expData,MI_est)
-
 %%% Still needs error bars
 
 % MI_est.trialData(nTrials).naiveEst_means annd .naiveEst_stds
@@ -109,17 +107,16 @@ stdIntercepts = std(intercepts_infiniteData,1,2);
 % % % % % % xlabel('1/(# samples)')
 % % % % % % ylabel('I [bits]')
 
-% invBins = 1./(binCountArray);
 invBinsSq = 1./(binCounts.^2);
 
-% p = polyfit(invBins',meanIntercepts,1);
 p2 = polyfit(invBinsSq',meanIntercepts,1);
 
-% f = polyval(p,[0:0.001:max(invBins)]);
 f2 = polyval(p2,[0:0.001:max(invBinsSq)]);
 
-% intercept = polyval(p,0);
-intercept2 = polyval(p2,0)
+intercept2 = polyval(p2,0);
+
+MI_ext = intercept2;
+disp(MI_ext)
 
 % % % figure
 % % % % % % hold on
