@@ -44,7 +44,7 @@ for iX = 1:nX-1
                 dgdx(iX,iG) * C_inv(iG,jG,iX) * dgdx(iX,jG);
         end
     end
-    sigma_x(iX) = sqrt(1/var_inv(iX))/nX;
+    sigma_x(iX) = sqrt(1/var_inv(iX));
 end
 
 end
