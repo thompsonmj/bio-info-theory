@@ -24,3 +24,4 @@ load('gap_data_raw_dorsal_wt_XY-Aligned.mat')
 
 %% PE for multiple genes simultaneously
 sigma_x = positionalerrorn(Y_align);
+
