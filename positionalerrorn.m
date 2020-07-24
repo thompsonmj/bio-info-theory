@@ -1,4 +1,12 @@
 function sigma_x = positionalerrorn(Y_in)
+%POSITIONALERRORN calculates the local positional error for a set of N
+%profiles.
+
+% Input:
+%   > Y_in: size: (number of x-points) x (number of replicates) x (number of
+%   independent signals)
+% Output:
+%   > sigma_x: 1-D array of the positional error (not normalized)
 
 % Based on Eq. 11 in Dubuis et al. 2013.
 % ref. https://www.itl.nist.gov/div898/handbook/pmc/section5/pmc541.htm
@@ -21,13 +29,16 @@ for iX = 100:nX
             if iG == jG
                 C(iG,jG,iX) = nanvar(Y_in(iX,:,iG),0,'all');
             else
-                C(iG,jG,iX) = mean(Y_in(iX,:,iG) .* Y_in(iX,:,jG)) - ...
-                    mean(Y_in(iX,:,iG)) * mean(Y_in(iX,:,jG));
+                C(iG,jG,iX) = nanmean(Y_in(iX,:,iG) .* Y_in(iX,:,jG)) - ...
+                              nanmean(Y_in(iX,:,iG)) * nanmean(Y_in(iX,:,jG));
             end
             % Alternatively
             % ref. https://www.itl.nist.gov/div898/handbook/pmc/section5/pmc541.htm
             C(iG,jG,iX) = ...
-                (1/(nE-1))*sum((Y_in(iX,:,iG)-mean(Y_in(iX,:,iG))).*(Y_in(iX,:,jG)-mean(Y_in(iX,:,jG))));
+                (1/(nE-1)) * ...
+                nansum( (Y_in(iX,:,iG) - nanmean(Y_in(iX,:,iG))) .* ...
+                        (Y_in(iX,:,jG) - nanmean(Y_in(iX,:,jG))) ...
+                      );
         end
     end
 end
