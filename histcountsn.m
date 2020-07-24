@@ -25,6 +25,10 @@ function [n,edges,binIdcs] = histcountsn(x,nBins,varargin)
 %   N-element vector [nbinsx1 nbinsx2 ... nbinsxn] specifies a different
 %   number of bins for the X1 through XN dimensions.
 
+%% Note
+% Minimally working version for use with midirectestimate.m and
+% midirectestimate2.m.
+
 %%
 nBinsIN = nBins;
 
