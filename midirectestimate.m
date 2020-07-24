@@ -13,6 +13,8 @@ function MI_est = ...
 % Outputs
 %   > MI_est: nTrials x nBinSizes x nSubsamplesets x nBoots array of naive
 %   estimates. To be extrapolated to infinitte data and 0 bin size.
+%
+% Based on Eq. 7 and Eq. 24 in Tkacik et al, 2015.
 
 [nBinsX,nE,nG] = size(yData);
 x = 1/nBinsX:1/nBinsX:1;
@@ -82,7 +84,6 @@ for iTrial = 1:nTrials
                 
                 % P(x): PDF of x (uniform)
                 px = repmat(pxBin,nBinsX,nBinsG);
-%                 px = squeeze(sum(pgxJ, [2 3]));
 
                 % P(g | x): PDF estimate of g conditional on x 
                 pg_given_x = pgxJ ./ px;
@@ -107,9 +108,6 @@ for iTrial = 1:nTrials
                 
             end
             
-%             disp(['Eq. 7:  ',num2str(mean(MIEq7))])
-%             disp(['Eq. 24: ',num2str(mean(MIEq24))])
-            
             MI_est(iTrial).naiveEst_means(iBinSize,iSubsampleIdx) = ...
                 mean(MIEq24);
             MI_est(iTrial).naiveEst_stds(iBinSize,iSubsampleIdx) = ...
@@ -129,4 +127,4 @@ for iTrial = 1:nTrials
     end
 end
 
-save(['direct-mi-estimate'],'MI_est','nBoots','binCounts','subSamps','m','nE')
+%save(['direct-mi-estimate'],'MI_est','nBoots','binCounts','subSamps','m','nE')
