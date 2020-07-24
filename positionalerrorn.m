@@ -23,7 +23,7 @@ end
 
 %% Calculate the nG x nG covariance matrix at each position
 C = zeros(nG,nG,nX);
-for iX = 100:nX
+for iX = 1:nX
     for iG = 1:nG
         for jG = 1:nG
             if iG == jG
