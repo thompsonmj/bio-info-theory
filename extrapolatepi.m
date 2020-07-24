@@ -1,3 +1,7 @@
+%% Note
+% Minimally working version for estimating results from midirectestimate.m
+% and midirectestimate2.m
+
 %%% Still needs error bars
 
 % MI_est.trialData(nTrials).naiveEst_means annd .naiveEst_stds
