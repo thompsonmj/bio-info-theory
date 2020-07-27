@@ -8,7 +8,6 @@ function sigma_x = positionalerror(Y_in)
 %   > sigma_x: 1-D array of the positional error (not normalized)
 
 % Based on Eq. 11 in Dubuis et al. 2013.
-% ref. https://www.itl.nist.gov/div898/handbook/pmc/section5/pmc541.htm
 
 g = mean(Y_in,2);
 
