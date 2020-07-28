@@ -1,28 +1,49 @@
 import numpy as np
-import math as ma
+import matplotlib.pyplot as plt
 
 import csv
-import pandas as pd 
 
+##################### Import Data, Clean Nan's ################################
 Y_in = []
+position = []
 
-with open("BIOTHEORY.csv") as csvfile:
+with open("HB_raw_data.csv") as csvfile:
     reader = csv.reader(csvfile, quoting=csv.QUOTE_NONNUMERIC) # change contents to floats
     for row in reader: # each row is a list
         Y_in.append(row)
+Y_in = np.array(Y_in)
 
-##################### Row mean of the dataframe ###############################
-mean = np.mean(Y_in,axis=1)
-print(len(mean))
+Y_in= Y_in[~np.isnan(Y_in).any(axis=1)]
 
-# ################### Calculate the Difference, Create Array ##################
+for i in range(0,len(Y_in)):
+    placeHold = i / len(Y_in)
+    position.append(placeHold)
+
+##################### Row mean of the Array ###############################
+mean = np.mean(Y_in,axis=1);
+normalizedMean = [];
+minMean = min(mean);
+maxMean = max(mean);
+#print("Length of Mean Array: "+ str(len(mean)))
+for i in range(0,len(mean)):
+    placeHold = (mean[i] - minMean) / maxMean
+    normalizedMean.append(placeHold)
+    
+#################### Calculate the Difference, Create Array ##################
 dgdx = []
+posErrorX = []
+count = 0
 for i in range(0,len(Y_in)-1):
+    count = count
     d = (mean[i+1] - mean[i])
     d = abs(d**-1)
     dgdx.append(d)
-#print((dgdx))
+    posErrorX.append(count/(len(mean)-1))
+    count = count + 1
+    
+#print("Length of dgdx: " + str(len(posErrorX)))
 # should be N-1, where N is the len of mean 
+#print(posErrorX)
     
 ##################### Calculate Standard Deviation ############################
 sigG = []
@@ -30,6 +51,13 @@ SD = np.std(Y_in, axis= 1)
 for i in range(0,len(Y_in)-1):
     sigG.append(SD[i])
 
-#print(stDev)
+#print("Length of sigG: " + str(len(sigG)))
 ##################### Calculate SigmaX ########################################
 sigmaX = np.multiply(sigG,dgdx) / len(dgdx);
+
+plt.figure(1)
+plt.plot(position,normalizedMean)
+
+plt.figure(2)
+plt.plot(posErrorX,sigmaX)
+plt.ylim(0,0.1)
