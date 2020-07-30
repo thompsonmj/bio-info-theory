@@ -3,7 +3,7 @@ clear
 %%
 % 102 fly embryos total. 
 % Change this to decrease processing time for testing and debugging.
-nEmbryosUsed = 102;
+nEmbryosUsed = 10;
 inputData = 'gap_data_raw_dorsal_wt'; % variable stored: 'data'
 inputFile = [inputData,'.mat'];
 genes = {'Hb','Kr','Gt','Kni'};
@@ -37,9 +37,9 @@ for iG = 1:nGenes
     end
 end
 Y_raw = Y_raw(idx_low:idx_high,idcs,:);
-[nPts,~,~] = size(Y_raw);
-padSize = round(nSamplePts*0.05);
-Y_raw = padarray(Y_raw,padSize,NaN,'both');
+% [nPts,~,~] = size(Y_raw);
+% padSize = round(nSamplePts*0.05);
+% Y_raw = padarray(Y_raw,padSize,NaN,'both');
 
 %% Comments
 % Up to this point, we have simply deleted data outside of the middle 80%
@@ -56,7 +56,7 @@ end
 
 %% 2 Numerically estimate optimal joint XY alignment (alpha, beta, gamma).
 
-[Y_xAlign,alpha,beta,gamma] = alignxy(Y_yAlign1,false);
+[Y_xAlign,alpha,beta,gamma] = alignxy(Y_yAlign1,0.05);
 
 % Should explore a 'better' solution than genetic optimization. This was
 % chosen because I shift profiles in x using their integer indices, and
@@ -69,13 +69,11 @@ end
 % too large). Additionally, y-alignment is poor when done jointly using
 % this method, so an additional chi^2 minimization must be run afterward.
 
-%% Trim away NaNs used for padding and x alignment.
-[nX,~,~] = size(Y_xAlign);
-Y_xAlign = Y_xAlign(padSize:nX-padSize+1,:,:);
-
 %% 3 Align Y alone once more for closed-form Y alignment.
 Y_align = zeros(size(Y_xAlign));
 for iG = 1:nGenes
     y = squeeze(Y_xAlign(:,:,iG));
     [Y_align(:,:,iG),~] = aligny(y);
 end
+
+[Y_align,~] = anchormean0to1(Y_align);
