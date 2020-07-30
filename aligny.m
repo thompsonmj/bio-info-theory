@@ -1,5 +1,4 @@
 function [g,chi2] = aligny(G_0)
-tic
 
 disp('Beginning Y alignment')
 
@@ -30,9 +29,6 @@ beta = p(2,:);
 
 g = (G_0 - alpha)./beta;
 
-[g,~] = anchormean0to1(g);
-
-toc
 end
 
 %% Cost function
