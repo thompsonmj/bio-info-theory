@@ -9,7 +9,7 @@ function [y, alpha, beta, gamma] = alignxy(Y_0, varargin)
 %   without causing data points to wrap around to the opposite side. If
 %   left empty, a default value of 0.05 is used.
 % Output:
-%   > g: aligned output data. 3D. Same size as input (pads removed).
+%   > y: aligned output data. 3D. Same size as input (pads removed).
 %   > alpha: additive parameter (1 per profile per target)
 %   > beta: scaling/multiplicative parameter (1 per profile per target)
 %   > gamma: shifting parameter (1 per replicate, all targets within a
