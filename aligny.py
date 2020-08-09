@@ -5,7 +5,6 @@ from scipy.optimize import minimize, NonlinearConstraint
 from anchormean0to1 import anchormean0to1
 
 def aligny(G_0):
-    #tic
     
     print("Beginning Y alignment")
     
@@ -53,10 +52,7 @@ def aligny(G_0):
     beta = solution.x[N:2*N]
 
     g = (G_0 - alpha)/beta
-
-    g,g_ignore = anchormean0to1(g)
     
-    #toc
     return g
 
 

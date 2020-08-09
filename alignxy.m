@@ -1,41 +1,67 @@
-function [g,alpha,beta,gamma] = alignxy(G_0,UseParallel_TF)
+function [y, alpha, beta, gamma] = alignxy(Y_0, varargin)
+%ALIGNXY jointly aligns data along X- and Y- axes of data in a 3D matrix.
+% 
+% Input:
+%   > Y_0: initial profile data. 3D (no. data points) x (no. replicates) x
+%   (no. targets).
+%   > varargin: NaN pad size as a percentage of the total length. NaN pad
+%   is used as a buffer to shift profiles left and right along the X-axis
+%   without causing data points to wrap around to the opposite side. If
+%   left empty, a default value of 0.05 is used.
+% Output:
+%   > y: aligned output data. 3D. Same size as input (pads removed).
+%   > alpha: additive parameter (1 per profile per target)
+%   > beta: scaling/multiplicative parameter (1 per profile per target)
+%   > gamma: shifting parameter (1 per replicate, all targets within a
+%   replicate are shifted by the same amount)
 tic
 
-disp('Beginning joint XY alignment with parallelization set to:')
-UseParallel_TF
+[nPoints, nReplicates, nTargets] = size(Y_0);
 
-[~,nE,nG] = size(G_0);
+%% Apply NaN padding to either side of each profile.
+defaultNanPadSize = 0.05;
+switch numel(varargin)
+    case 0
+        nanPadSize = defaultNanPadSize;
+    case 1
+        nanPadSize = varargin{1};
+end
 
-padSize = sum(isnan(G_0(:,1,1)))/2;
+nNansInPad = round(nPoints * nanPadSize);
+Y_0 = padarray(Y_0, nNansInPad, NaN, 'both');
 
-alpha_0 = zeros(nG,nE);
-beta_0 = ones(nG,nE);
-gamma_0 = zeros(1,nE);
+% nNansInPad = sum(isnan(Y_0(:,1,1)))/2;
+
+%% Initialize alignment parameters.
+alpha_0 = zeros(nTargets, nReplicates);
+beta_0 = ones(nTargets, nReplicates);
+gamma_0 = zeros(1, nReplicates);
 
 nAlpha = numel(alpha_0);
 nBeta = numel(beta_0);
 nGamma = numel(gamma_0);
 
 options = optimoptions('ga', ...
-    'UseParallel', UseParallel_TF, ...
     'UseVectorized', false);
 
 nP = nAlpha + nBeta + nGamma;
 
 %% Specify indices to rereference parameters in cost function.
-for iG = 1:nG
-    alphaStart = nAlpha*(iG/nG) - nE + 1;
-    alphaEnd = alphaStart + nE - 1;
-    idcs.alpha{iG} = alphaStart:alphaEnd;
+for iT = 1:nTargets
+    alphaStart = nAlpha*(iT/nTargets) - nReplicates + 1;
+    alphaEnd = alphaStart + nReplicates - 1;
+    idcs.alpha{iT} = alphaStart:alphaEnd;
     
-    betaStart = nAlpha + nBeta*(iG/nG) - nE + 1;
-    betaEnd = betaStart + nE - 1;
-    idcs.beta{iG} = betaStart:betaEnd;
+    betaStart = nAlpha + nBeta*(iT/nTargets) - nReplicates + 1;
+    betaEnd = betaStart + nReplicates - 1;
+    idcs.beta{iT} = betaStart:betaEnd;
 end
-idcs.gamma = nP - nE + 1: nP;
+idcs.gamma = nP - nReplicates + 1: nP;
 
-f = @(P)chisq(P, G_0, idcs); 
 
+f = @(P)chisq(P, Y_0, idcs); 
+
+%% Set alignment parameter constraints.
 IntCon = (nP - nGamma + 1):nP;
 
 lb_alpha = -ones(nAlpha,1);
@@ -44,79 +70,90 @@ ub_alpha = ones(nAlpha,1);
 lb_beta = zeros(nBeta,1);
 ub_beta = 2*ones(nBeta,1);
 
-lb_gamma = repmat(-padSize/2,nE,1);
-ub_gamma = repmat(padSize/2,nE,1);
+lb_gamma = repmat(-nNansInPad/2,nReplicates,1);
+ub_gamma = repmat(nNansInPad/2,nReplicates,1);
 
 lb = [lb_alpha; lb_beta; lb_gamma];
 ub = [ub_alpha; ub_beta; ub_gamma];
 
+%% Optimization.
+% Need to replace GA with something more efficient.
 [P_final,~,exitFlag,~,~] = ...
     ga(f,nP,[],[],[],[],lb,ub,[],IntCon,options);
 
 exitFlag
 
 %% Extract parameters from P_final.
-alpha = zeros(nG,nE);
-beta = zeros(nG,nE);
-gamma = zeros(1,nE);
+alpha = zeros(nTargets,nReplicates);
+beta = zeros(nTargets,nReplicates);
+gamma = zeros(1,nReplicates);
 
-for iE = 1:nE
-    for iG = 1:nG
-        alpha(iG,iE) = P_final(idcs.alpha{iG}(iE));
-        beta(iG,iE) = P_final(idcs.beta{iG}(iE));
+for iR = 1:nReplicates
+    for iT = 1:nTargets
+        alpha(iT,iR) = P_final(idcs.alpha{iT}(iR));
+        beta(iT,iR) = P_final(idcs.beta{iT}(iR));
     end
-    gamma(iE) = P_final(idcs.gamma(iE));
+    gamma(iR) = P_final(idcs.gamma(iR));
 end
 
-%% Apply parameters alpha, beta, and gamma to G_0.
-G = zeros(size(G_0));
-g = zeros(size(G));
-for iE = 1:nE
-    G(:,iE,:) = circshift( G_0(:,iE,:),gamma(iE),1 );
+%% Apply parameters alpha, beta, and gamma to profile data.
+Y = zeros(size(Y_0));
+y = zeros(size(Y));
+for iR = 1:nReplicates
+    Y(:,iR,:) = circshift( Y_0(:,iR,:),gamma(iR),1 );
 end
-for iG = 1:nG
-    alpha_tmp = alpha(iG,:);
-    beta_tmp = beta(iG,:);
-    g(:,:,iG) = (G(:,:,iG) - alpha_tmp)./beta_tmp;
+for iT = 1:nTargets
+    alpha_tmp = alpha(iT,:);
+    beta_tmp = beta(iT,:);
+    y(:,:,iT) = (Y(:,:,iT) - alpha_tmp)./beta_tmp;
 end
-
-[g,~] = anchormean0to1(g);
 
 shiftAmt = -round((mean(gamma)));
-for iE = 1:nE
-    g(:,iE,:) = circshift(g(:,iE,:),shiftAmt,1 );
+for iR = 1:nReplicates
+    y(:,iR,:) = circshift(y(:,iR,:),shiftAmt,1 );
 end
+
+%% Remove NaN padding from either side of each profile.
+[nPoints, nReplicates, nTargets] = size(y);
+
+nFrontNans = round( sum(isnan(y(1:round(nPoints/2),:,:)),'all') / ...
+    (nReplicates*nTargets) );
+nEndNans = round( sum(isnan(y(round(nPoints/2):end,:,:)),'all') / ...
+    (nReplicates*nTargets) );
+
+y = y( (nFrontNans : (nPoints - nEndNans + 1)), :, : );
+
 toc
 
 end
 
 %% Cost function
-function chi2 = chisq(P, G, idcs)
-    [~,nE,nG] = size(G);
+function chi2 = chisq(P, Y, idcs)
+    [~,nReplicates,nTargets] = size(Y);
 
-    alpha = zeros(nG,nE);
-    beta = zeros(nG,nE);
-    gamma = zeros(1,nE);
+    alpha = zeros(nTargets, nReplicates);
+    beta = zeros(nTargets, nReplicates);
+    gamma = zeros(1, nReplicates);
         
-    for iE = 1:nE
-        for iG = 1:nG
-            alpha(iG,iE) = P(idcs.alpha{iG}(iE));
-            beta(iG,iE) = P(idcs.beta{iG}(iE));
+    for iE = 1:nReplicates
+        for iT = 1:nTargets
+            alpha(iT,iE) = P(idcs.alpha{iT}(iE));
+            beta(iT,iE) = P(idcs.beta{iT}(iE));
         end
         gamma(iE) = P(idcs.gamma(iE));
-        G(:,iE,:) = circshift(G(:,iE,:),gamma(iE),1);
-    end
-        
-    g_mean = squeeze(nanmean(G,2));
-    
-    chi2_G = zeros(nG,1);
-    for iG = 1:nG
-        G_tmp = squeeze(G(:,:,iG));
-        alpha_tmp = alpha(iG,:);
-        beta_tmp = beta(iG,:);
-        chi2_G(iG) = ...
-            nanmean(nansum( (G_tmp - (alpha_tmp + beta_tmp.*g_mean(:,iG))).^2 ));
+        Y(:,iE,:) = circshift(Y(:,iE,:), gamma(iE),1);
     end
     
-    chi2 = mean(chi2_G);
+    y_mean = squeeze(nanmean(Y, 2));
+    
+    chi2_Y = zeros(nTargets, 1);
+    for iT = 1:nTargets
+        Y_tmp = squeeze(Y(:,:,iT));
+        alpha_tmp = alpha(iT,:);
+        beta_tmp = beta(iT,:);
+        chi2_Y(iT) = ...
+            nanmean(nansum( (Y_tmp - (alpha_tmp + beta_tmp.*y_mean(:,iT))).^2 ));
+    end
+    
+    chi2 = mean(chi2_Y);
 end
