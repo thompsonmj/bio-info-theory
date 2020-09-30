@@ -1,1 +1,1 @@
-wget -q -O https://ars.els-cdn.com/content/image/1-s2.0-S0092867419300406-mmc4.zip
+wget -q -O data.zip https://ars.els-cdn.com/content/image/1-s2.0-S0092867419300406-mmc4.zip
