@@ -1,2 +1,6 @@
+mkdir data
+cd data
 wget -q -O data.zip https://ars.els-cdn.com/content/image/1-s2.0-S0092867419300406-mmc4.zip
 unzip -q data.zip
+rm data.zip
+cd ..
