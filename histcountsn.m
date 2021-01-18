@@ -11,7 +11,7 @@ function [n,edges,binIdcs] = histcountsn(x,nBins,varargin)
 %   bins along the X1 through XN dimensions respectively. ...
 
 %
-%   N is an I-by-J matrix where I and J are the number of bins along the
+%   N is an I-by-J matrixand I  where I and J are the number of bins along the
 %   X and Y dimensions respectively. N(i,j) will count the value [X(k),Y(k)]
 %   if XEDGES(i) <= X(k) < XEDGES(i+1) and YEDGES(j) <= Y(k) < YEDGES(j+1).
 %   The last bins in the X and Y dimensions will also include the upper
