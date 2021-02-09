@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import minimize, NonlinearConstraint
+from scipy.optimize import minimize
+#from scipy.optimize import NonlinearConstraint
 from anchormean0to1 import anchormean0to1
 
     

@@ -5,7 +5,6 @@ y_min = min(Y,[],'all');
 y_max = max(Y,[],'all');
 Y_mean = mean(Y,2);
 
-Z = 1; %n_points;
 
 %% Px(x)
 px_bin = (1/n_bins_x);
@@ -36,6 +35,18 @@ py = sum(pyx_joint,1);
 % ?dyP(y) = 1
 py = py/sum(py);
 
+%% Calculate Positional Error
+
+sigma_x = positionalerrorn(Y);
+sigma_x_end = sigma_x(end);
+sigma_x = [sigma_x;sigma_x_end];
+
+% Z = 1;
+% Z = sum(sigma_x);
+Z = 1;
+% Z/L = 1/(sigma_x(x))
+
+
 if n_targets == 1
     %% Single Gene Case
     disp('Mapping single gene') 
@@ -57,8 +68,12 @@ if n_targets == 1
                 
                 y_alpha_act = Y(i_x_act,i_r);
                 
+                %%
 %                 idx_y = max([round( (y_alpha_act - y_min)/bin_width_y),1]);
 %                 Z = py(idx_y);
+%                 Z/L = 1/(sigma_x(x))
+%                 Z = 1/(sigma_x(i_x_act));
+                %%
                 
                 chi2_imp = (y_alpha_act - y_mean_imp)^2 / (y_std_imp^2);
                 
@@ -135,8 +150,10 @@ elseif n_targets > 1
                 
                 chi2_imp = zeros(n_targets, n_targets);
                 
-               
-                % ?^2 for multiple genes
+                %%
+%                 Z = 1/(sigma_x(i_x_act));
+                %%
+                % chi^2 for multiple genes
                 for i_t = 1:n_targets
                     y_i_alpha_act = Y(i_x_act,i_r,i_t);
                     y_i_mean_imp = Y_mean(i_x_imp,i_t);

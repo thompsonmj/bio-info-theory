@@ -9,13 +9,15 @@ function sigma_x = positionalerror(Y_in)
 
 % Based on Eq. 11 in Dubuis et al. 2013.
 
+[n_points, n_replicates] = size(Y_in);
+
 g = mean(Y_in,2);
 
-dgdx = diff(g);
+dgdx = diff(g)./(1/(n_points));
 
-sigG = std(Y_in,1,2);
-sigG = sigG(1:end-1);
+sigma_g = std(Y_in,0,2);
+sigma_g = sigma_g(1:end-1);
 
-sigma_x = sigG.*abs(dgdx).^-1/numel(dgdx);
+sigma_x = sigma_g.*(dgdx.^-1);
 
 end

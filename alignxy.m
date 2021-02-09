@@ -121,7 +121,21 @@ nFrontNans = round( sum(isnan(y(1:round(nPoints/2),:,:)),'all') / ...
 nEndNans = round( sum(isnan(y(round(nPoints/2):end,:,:)),'all') / ...
     (nReplicates*nTargets) );
 
-y = y( (nFrontNans : (nPoints - nEndNans + 1)), :, : );
+y_temp = y( (nFrontNans : (nPoints - nEndNans + 1)), :, : );
+
+% Ensure the size of the output matches the size of the input.
+[n_points_temp,~,~] = size(y_temp);
+if n_points_temp == nPoints
+    y = y_temp;
+elseif n_points_temp == nPoints - 2
+    nFrontNans = nFrontNans - 1;
+    nEndNans = nEndNans - 1;
+    
+    y = y( (nFrontNans : (nPoints - nEndNans + 1)), :, : );
+elseif n_points_temp == nPoints - 1
+    nFrontNans = nFrontNans - 1;
+    y = y( (nFrontNans : (nPoints - nEndNans + 1)), :, : );
+end
 
 toc
 

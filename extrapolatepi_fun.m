@@ -1,3 +1,4 @@
+function MI_ext = extrapolatepi_fun(MI_est,n_replicates,bin_counts)
 %% Note
 % Minimally working version for estimating results from midirectestimate.m
 % and midirectestimate2.m
@@ -103,7 +104,6 @@ for iB = 1: nBinSizes
 %     end
 end
 
-
 meanIntercepts = mean(intercepts_infiniteData,2);
 stdIntercepts = std(intercepts_infiniteData,1,2);
 
@@ -112,7 +112,7 @@ stdIntercepts = std(intercepts_infiniteData,1,2);
 % % % % % % xlabel('1/(# samples)')
 % % % % % % ylabel('I [bits]')
 
-invBinsSq = 1./(binCounts.^2);
+invBinsSq = 1./(bin_counts.^2);
 
 p2 = polyfit(invBinsSq',meanIntercepts,1);
 
@@ -121,7 +121,7 @@ f2 = polyval(p2,[0:0.001:max(invBinsSq)]);
 intercept2 = polyval(p2,0);
 
 MI_ext = intercept2;
-disp(MI_ext)
+% disp(MI_ext)
 
 % % % figure
 % % % % % % hold on

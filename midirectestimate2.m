@@ -41,14 +41,14 @@ for iTrial = 1:nTrials
     MI_est(iTrial).naiveEst_means = zeros(nBinSizes,nSubsamplesets);
     MI_est(iTrial).naiveEst_stds = zeros(nBinSizes,nSubsamplesets);
     if nTrials > 1
-        disp(['Beginning trial ',num2str(iTrial),'/',num2str(nTrials)])
-        tic
+%         disp(['Beginning trial ',num2str(iTrial),'/',num2str(nTrials)])
+%         tic
     end
     iBinSizeIdx = 0;
     for iBinSize = 1:nBinSizes
         if nTrials == 1
-            disp(['Beginning bin ',num2str(iBinSize),'/',num2str(nBinSizes)])
-            tic
+%             disp(['Beginning bin ',num2str(iBinSize),'/',num2str(nBinSizes)])
+%             tic
         end
         nBinsG = binCounts(iBinSize);
         
@@ -117,14 +117,14 @@ for iTrial = 1:nTrials
         end
         
         if nTrials == 1
-            toc
-            disp([num2str(round(100*iBinSize/nBinSizes,2)),'%'])
+%             toc
+%             disp([num2str(round(100*iBinSize/nBinSizes,2)),'%'])
         end
     end
     
     if nTrials > 1
-        toc
-        disp([num2str(round(100*iTrial/nTrials,2)),'%'])
+%         toc
+%         disp([num2str(round(100*iTrial/nTrials,2)),'%'])
     end
 end
 
